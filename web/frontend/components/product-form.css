@@ -1,0 +1,10 @@
+.offer-card {
+  border: 1px solid black;
+  padding: 20px;
+}
+
+.view-offer {
+  border: 2px solid black;
+  padding: 20px;
+  margin: 10px 0;
+}
