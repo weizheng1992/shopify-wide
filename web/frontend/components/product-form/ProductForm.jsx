@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   Card,
   Form,
@@ -18,33 +18,54 @@ import "../product-form.css";
 
 import { useAuthenticatedFetch } from "../../hooks";
 
+const init = [{ title: "", price: "", compareAtPrice: "" }];
+
 export function ProductForm({ offerInfo, productId }) {
   const [offer, setOffer] = useState(offerInfo);
   const [headingvalue, setHeadingvalue] = useState(offerInfo.heading);
-  const navigate = useNavigate();
   const fetch = useAuthenticatedFetch();
 
-  const init = [{ title: "", price: "", compareAtPrice: "" }];
-  const list = {
-    list: offerInfo?.list || init,
-    validates: {
-      price: (price) => {
-        var reg = /^[0-9]+.?[0-9]*$/; //判断字符串是否为数字 ，判断正整数用/^[1-9]+[0-9]*]*$/
-        if (price !== null && price !== "") {
-          if (!reg.test(price)) {
-            return "请输入数字";
+  const list = useMemo(
+    () => ({
+      list: offerInfo?.list || init,
+      validates: {
+        price: (price) => {
+          var reg = /^[0-9]+.?[0-9]*$/; //判断字符串是否为数字 ，判断正整数用/^[1-9]+[0-9]*]*$/
+          if (price !== null && price !== "") {
+            if (!reg.test(price)) {
+              return "请输入数字";
+            }
+          } else {
+            return " You need to add a price";
           }
-        } else {
-          return " You need to add a price";
-        }
+        },
+        title: (title) => {
+          if (title === "") {
+            return " You need to add a title for this offer";
+          }
+        },
+        list: (list, data) => {
+          if (list.length > 0) {
+            const listItemLength = Array.isArray(data.listItem.list.value)
+              ? data.listItem.list.value.length
+              : 0;
+
+            const siblingsLength = Array.isArray(data.siblings)
+              ? data.siblings.reduce((acc, sibling) => {
+                  return Array.isArray(sibling.list.value)
+                    ? acc + sibling.list.value.length
+                    : acc;
+                }, 0)
+              : 0;
+            if (listItemLength !== siblingsLength) {
+              return " All your offers need to have the same amount of options";
+            }
+          }
+        },
       },
-      title: (title) => {
-        if (title === "") {
-          return " You need to add a title for this offer";
-        }
-      },
-    },
-  };
+    }),
+    [offerInfo.list]
+  );
 
   const emptyCardFactory = () => ({
     title: "",
@@ -97,6 +118,7 @@ export function ProductForm({ offerInfo, productId }) {
   );
 
   const { submit, submitting } = useSubmit(onSubmit, fieldsList);
+
   // const dirty = useDirty(fields);
   // const reset = useReset(fields);
 

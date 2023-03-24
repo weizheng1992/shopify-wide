@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, memo } from "react";
+import { useState, useCallback, useEffect, memo, useMemo } from "react";
 import {
   FormLayout,
   TextField,
@@ -36,12 +36,6 @@ function OfferForm({
   const handleOptionsChange = () => {
     setOptionsChecked((prev) => !prev);
   };
-
-  // useEffect(() => {
-  //   if (list.value && list.value.length > 0 && !optionsChecked) {
-  //     setOptionsChecked(true);
-  //   }
-  // }, [list.value]);
 
   const handleToggle = useCallback(() => setOpen((open) => !open), []);
 
@@ -137,11 +131,15 @@ function OfferForm({
                 onChange={handleOptionsChange}
               />
             </Collapsible>
-            <OptionsForm
-              optionsChecked={optionsChecked}
-              list={[...list.value]}
-              onChange={list.onChange}
-            />
+            <FormLayout.Group>
+              <OptionsForm
+                optionsChecked={optionsChecked}
+                list={[...list.value]}
+                onChange={list.onChange}
+                error={list.error}
+                onBlur={list.onBlur}
+              />
+            </FormLayout.Group>
           </FormLayout>
         </Stack.Item>
         <Stack.Item>

@@ -2,10 +2,7 @@ import shopify from "../shopify.js";
 
 import OfferController from "../controller/OfferController.js";
 
-import {
-  CREATE_PRODUCT_VARIANT_MUTATION,
-  PRODUCT_UPDATE_MUTATION,
-} from "../helper/gql.js";
+import { MUTATION_PRODUCT_UPDATE, QUERY_PRODCUT_INFO } from "../helper/gql.js";
 import { getShopUrlFromSession, getCombinations } from "../helper/offer.js";
 
 export default function applyOfferApiEndpoints(app) {
@@ -21,31 +18,12 @@ export default function applyOfferApiEndpoints(app) {
         },
       };
       const options = ["default"];
-      const result = [];
+      // const result = [];
       if (variants.length > 0) {
-        variants.forEach((item) => {
-          const { price } = item;
-
-          const generateOptions = (index, options) => {
-            const list = item.list[index];
-            if (!list) {
-              const optionList = [item.title];
-              Object.values(options).forEach((option) => {
-                optionList.push(option);
-              });
-              result.push({ price, options: optionList });
-              return;
-            }
-            const { optionsName, optionsTags: tags } = list;
-            tags.forEach((tag) => {
-              generateOptions(index + 1, { ...options, [optionsName]: tag });
-            });
-          };
-
-          generateOptions(0, {});
-        });
-
-        ///  获取option
+        // 数据改为variants格式
+        variables.input.variants = getCombinations(variants);
+        //  获取option
+        // variables.input.options = ["Size", "Color"];
         variants[0].list.forEach((listItem) => {
           if (!options.includes(listItem.optionsName)) {
             options.push(listItem.optionsName);
@@ -54,43 +32,9 @@ export default function applyOfferApiEndpoints(app) {
       }
 
       variables.input.options = options;
-      variables.input.variants = result;
-
-      //  variables = {
-
-      // variables.input.variants = [
-      //   {
-      //     price: "4.00",
-      //     options: ["big", "mauve"],
-      //   },
-      //   {
-      //     price: "2.00",
-      //     options: ["big", "iridescent"],
-      //   },
-      //   {
-      //     price: "5.00",
-      //     options: ["small", "mauve"],
-      //   },
-      //   {
-      //     price: "1.00",
-      //     options: ["small", "iridescent"],
-      //   },
-      // ];
-      // variables.input.options = ["Size", "Color"];
-      //     options: [req.body.title],
-      //     variants: [
-      //       {
-      //         price: req.body.price,
-      //         options: [req.body.title],
-      //         compareAtPrice:req.body.compareAtPrice
-      //       },
-      //     ],
-      //   },
-      // };
       const data = await client.query({
         data: {
-          // query: CREATE_PRODUCT_VARIANT_MUTATION,
-          query: PRODUCT_UPDATE_MUTATION,
+          query: MUTATION_PRODUCT_UPDATE,
           variables,
         },
       });
@@ -98,7 +42,6 @@ export default function applyOfferApiEndpoints(app) {
       const offerData = {
         shopDomain: await getShopUrlFromSession(req, res),
         productId: req.body.productId,
-        // variantId: data.body.data.productVariantCreate.productVariant.id,
         heading: heading,
       };
       const offer = await OfferController.createOffer(offerData);
@@ -108,7 +51,42 @@ export default function applyOfferApiEndpoints(app) {
     } catch (error) {
       res
         .status(500)
-        .json({ error: "An error occurred while creating the user." });
+        .json({ error: "An error occurred while creating the offer." });
+    }
+  });
+
+  app.post("/api/offer/list", async (req, res) => {
+    try {
+      const { query, options } = req.body;
+      const params = {};
+      const admin = await getShopUrlFromSession(req, res);
+      if (query) {
+        params = { ...query, shopDomain: admin };
+      } else {
+        params.shopDomain = admin;
+      }
+      const res = await OfferController.getPage(params, options);
+
+      const client = new shopify.api.clients.Graphql({
+        session: res.locals.shopify.session,
+      });
+
+      const { data } = res;
+      for (let index = 0; index < data.length; index++) {
+        const element = data[index];
+        const pro = await client.query({
+          data: {
+            query: MUTATION_PRODUCT_UPDATE,
+            variables: { productId: element.productId },
+          },
+        });
+        element.title = pro.title;
+      }
+      res.status(200).json(res);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "An error occurred while list the offer." });
     }
   });
 }

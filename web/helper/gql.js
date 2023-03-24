@@ -1,3 +1,4 @@
+// 创建Variant
 export const CREATE_PRODUCT_VARIANT_MUTATION = `
 mutation productVariantCreate($input: ProductVariantInput!) {
   productVariantCreate(input: $input) {
@@ -18,6 +19,7 @@ mutation productVariantCreate($input: ProductVariantInput!) {
 }
 `;
 
+// 获取shopify产品列表 分页
 export const QUERY_PRODUCTS_LIMIT = `
 query products($first: Int!, $after: String, $title: String) {
   products(first: $first, after: $after, query: $title) {
@@ -36,7 +38,8 @@ query products($first: Int!, $after: String, $title: String) {
 }
 `;
 
-export const PRODUCT_OFFER_ADMIN_QUERY = `
+// 根据productId获取shopify产品详情-variants
+export const QUERY_PRODUCT_OFFER_VARIANTS = `
 query getProduct($productId: ID!) {
   product(id: $productId) {
     id
@@ -64,7 +67,8 @@ query getProduct($productId: ID!) {
 }
 `;
 
-export const PRODUCT_VARIANT_QUERY = `
+// 根据id获取productVariant
+export const QUERY_PRODUCT_VARIANT = `
 query getproductVariant($id: ID!) {
   productVariant(id: $id) {
     title
@@ -80,7 +84,8 @@ query getproductVariant($id: ID!) {
 }
 `;
 
-export const PRODUCT_UPDATE_MUTATION = `
+// 更新shopify产品信息
+export const MUTATION_PRODUCT_UPDATE = `
 mutation productUpdate($input: ProductInput!) {
   productUpdate(input: $input) {
     product {
@@ -97,6 +102,16 @@ mutation productUpdate($input: ProductInput!) {
       field
       message
     }
+  }
+}
+`;
+
+// 根据id 获取shopify商品信息
+
+export const QUERY_PRODCUT_INFO = `query getProduct($productId: ID!) {
+  product(id: $productId) {
+    id
+    title
   }
 }
 `;

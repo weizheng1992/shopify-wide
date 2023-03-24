@@ -1,4 +1,5 @@
 import { Offer } from "../db/db.js";
+import paginate from "./paginate.js";
 
 class OfferController {
   static async createOffer(offerData) {
@@ -17,7 +18,7 @@ class OfferController {
       const offer = await Offer.findById(id);
       return offer;
     } catch (error) {
-      console.error("Error getting user by email:", error);
+      console.error("Error getting Offe by email:", error);
       throw error;
     }
   }
@@ -27,7 +28,7 @@ class OfferController {
       const offer = await Offer.find(params);
       return offer;
     } catch (error) {
-      console.error("Error getting user by email:", error);
+      console.error("Error getting Offe by params:", error);
       throw error;
     }
   }
@@ -39,7 +40,7 @@ class OfferController {
       });
       return offer;
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error("Error updating Offe:", error);
       throw error;
     }
   }
@@ -48,7 +49,16 @@ class OfferController {
     try {
       await Offer.findByIdAndDelete(offerId);
     } catch (error) {
-      console.error("Error deleting user:", error);
+      console.error("Error deleting Offe:", error);
+      throw error;
+    }
+  }
+  static async getPage(query, options) {
+    try {
+      const result = await paginate(Offer, query, options);
+      return result;
+    } catch (error) {
+      console.error("Error getPage Offe:", error);
       throw error;
     }
   }

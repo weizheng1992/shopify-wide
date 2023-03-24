@@ -26,7 +26,18 @@ export function ProductsList() {
       */
     isRefetching,
   } = useAppQuery({
-    url: "/api/product/offerList",
+    url: "/api/offer/list",
+    fetchInit: {
+      method: "POST",
+      body: JSON.stringify({
+        options: {
+          page: 1,
+          limit: 10,
+          sort: { createdAt: -1 },
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+    },
   });
 
   const emptyStateMarkup = (

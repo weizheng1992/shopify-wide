@@ -1,9 +1,6 @@
 import shopify from "../shopify.js";
 import OfferController from "../controller/OfferController.js";
-import {
-  PRODUCT_VARIANT_QUERY,
-  PRODUCT_OFFER_ADMIN_QUERY,
-} from "../helper/gql.js";
+import { QUERY_PRODUCT_OFFER_VARIANTS } from "../helper/gql.js";
 
 export async function getShopUrlFromSession(req, res) {
   return `https://${res.locals.shopify.session.shop}`;
@@ -30,7 +27,7 @@ export async function getProductByPid(req, res) {
     try {
       const adminData = await client.query({
         data: {
-          query: PRODUCT_OFFER_ADMIN_QUERY,
+          query: QUERY_PRODUCT_OFFER_VARIANTS,
 
           /* The IDs that are pulled from the app's database are used to query product, variant and discount information */
           variables: { productId },
@@ -46,41 +43,53 @@ export async function getProductByPid(req, res) {
   return undefined;
 }
 
-const generateOptions = (data) => {
-  const options = ["default"];
-  for (const item of data) {
-    options.push(item.title);
-    for (const list of item.list) {
-      if (!options.includes(list.optionsName)) {
-        options.push(list.optionsName);
-      }
-    }
-  }
-  return options;
-};
+// variables.input.variants = [
+//   {
+//     price: "4.00",
+//     options: ["big", "mauve"],
+//   },
+//   {
+//     price: "2.00",
+//     options: ["big", "iridescent"],
+//   },
+//   {
+//     price: "5.00",
+//     options: ["small", "mauve"],
+//   },
+//   {
+//     price: "1.00",
+//     options: ["small", "iridescent"],
+//   },
+// ];
 
+/**
+ * @description 将数据转换成上面的格式
+ *
+ * @param {*} data
+ * @return {*}
+ */
 export const getCombinations = (data) => {
-  const options = generateOptions(data);
-  const variations = [];
-  const base = new Array(options.length).fill("default");
+  const result = [];
+  data.forEach((item) => {
+    const { price } = item;
 
-  for (const item of data) {
-    const price = item.price;
-    const titleIndex = options.indexOf(item.title);
-    const { list } = item;
-    const listIndexes = list.map((item) => options.indexOf(item.optionsName));
-
-    for (let i = 0; i < list[0].optionsTags.length; i++) {
-      const combination = [...base];
-      combination[titleIndex] = item.title;
-      for (let j = 0; j < listIndexes.length; j++) {
-        const optionIndex = listIndexes[j];
-        const optionValue = list[j].optionsTags[i];
-        combination[optionIndex] = optionValue;
+    const generateOptions = (index, options) => {
+      const list = item.list[index];
+      if (!list) {
+        const optionList = [item.title];
+        Object.values(options).forEach((option) => {
+          optionList.push(option);
+        });
+        result.push({ price, options: optionList });
+        return;
       }
-      variations.push({ price, options: combination });
-    }
-  }
+      const { optionsName, optionsTags: tags } = list;
+      tags.forEach((tag) => {
+        generateOptions(index + 1, { ...options, [optionsName]: tag });
+      });
+    };
 
-  return variations;
+    generateOptions(0, {});
+  });
+  return result;
 };
