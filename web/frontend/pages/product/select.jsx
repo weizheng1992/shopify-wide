@@ -9,8 +9,8 @@ const SearchBar = () => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState([]);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [cursor, setCursor] = useState(null);
+  const [pageInfo, setPageInfo] = useState(null);
+  const [cursor, setCursor] = useState("");
   const navigate = useNavigate();
 
   const fetch = useAuthenticatedFetch();
@@ -25,18 +25,19 @@ const SearchBar = () => {
     const response = await fetch(`/api/product/list?${query_params}`);
 
     const { products: fetchedProducts } = await response.json();
-    const list = fetchedProducts.edges.map((item) => {
+    const list = fetchedProducts.nodes.map((item) => {
       return {
-        cursor: item.cursor,
-        value: item.node.id,
-        label: item.node.title,
+        value: item.id,
+        label: item.title,
       };
     });
     setProducts((prevProducts) =>
-      !cursor ? list : [...prevProducts, ...list]
+      !cursor
+        ? list
+        : [...prevProducts, ...list]
     );
 
-    setHasNextPage(fetchedProducts.pageInfo.hasNextPage);
+    setPageInfo(fetchedProducts.pageInfo);
     setIsLoading(false);
   }, [cursor, inputValue]);
 
@@ -45,14 +46,14 @@ const SearchBar = () => {
   }, [handleFetchProducts]);
 
   const handleLoadMoreResults = () => {
-    if (hasNextPage) {
-      setCursor(products[products.length - 1].cursor);
+    if (pageInfo?.hasNextPage) {
+      setCursor(pageInfo.endCursor);
     }
   };
 
   const updateText = (value) => {
     setInputValue(value);
-    setCursor(null);
+    setCursor("");
   };
 
   const updateSelection = (selected) => {
@@ -92,9 +93,9 @@ const SearchBar = () => {
           selected={selectedOptions}
           onSelect={updateSelection}
           textField={textField}
-          isLoading={isLoading}
+          loading={isLoading}
           onLoadMoreResults={handleLoadMoreResults}
-          willLoadMoreResults={hasNextPage}
+          willLoadMoreResults={pageInfo?.hasNextPage}
         />
       </Card>
     </Page>

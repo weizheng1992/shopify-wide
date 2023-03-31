@@ -4,7 +4,7 @@ import LabelTip from "../LabelTip";
 import TextTag from "./TextTag";
 import { memo } from "react";
 const indexToEn = ["first", "second"];
-function OptionsItem({ index, optionsName, optionsTags }) {
+function OptionsItem({ index, optionsName, optionsTags, onRemoveItem }) {
   return (
     <Card sectioned key={index}>
       <FormLayout>
@@ -19,7 +19,7 @@ function OptionsItem({ index, optionsName, optionsTags }) {
             <Button
               plain
               icon={DeleteMajor}
-              onClick={() => handleRemove(index - 1)}
+              onClick={() => onRemoveItem(index - 1)}
             ></Button>
           }
           {...optionsName}

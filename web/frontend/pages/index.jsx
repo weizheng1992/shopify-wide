@@ -1,7 +1,7 @@
 import { Card, Page, Layout } from "@shopify/polaris";
 import { useNavigate, TitleBar } from "@shopify/app-bridge-react";
 
-import { ProductsList } from "../components";
+import { OfferList } from "../components/offer-list";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export default function HomePage() {
               },
             ]}
           >
-            <ProductsList />
+            <OfferList />
           </Card>
         </Layout.Section>
       </Layout>

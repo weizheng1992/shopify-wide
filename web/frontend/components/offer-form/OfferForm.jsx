@@ -9,7 +9,7 @@ import {
   Collapsible,
   Tooltip,
   Checkbox,
-  Card,
+  Select,
 } from "@shopify/polaris";
 
 import {
@@ -20,6 +20,7 @@ import {
 } from "@shopify/polaris-icons";
 
 import OptionsForm from "./OptionsForm";
+import LabelTip from "../LabelTip";
 
 function OfferForm({
   title,
@@ -31,13 +32,16 @@ function OfferForm({
 }) {
   const [open, setOpen] = useState(true);
   const [optionsChecked, setOptionsChecked] = useState(
-    list.value && list.value.length > 0 && true
+    list?.value && list?.value.length > 0 && true
   );
+
+  // options 选中显示options列表，否则隐藏
   const handleOptionsChange = () => {
     setOptionsChecked((prev) => !prev);
   };
 
-  const handleToggle = useCallback(() => setOpen((open) => !open), []);
+  // 每列offer的显示和隐藏
+  const handleOfferToggle = useCallback(() => setOpen((open) => !open), []);
 
   return (
     <div style={{ border: "1px solid black", padding: 20 }}>
@@ -46,12 +50,12 @@ function OfferForm({
           <FormLayout>
             <TextField
               label={
-                <Stack>
-                  <TextContainer>Offer title</TextContainer>
-                  <Tooltip content="The name of the offer to explain what people will receive. ">
-                    <Icon source={CircleInformationMajor} />
-                  </Tooltip>
-                </Stack>
+                <LabelTip
+                  label={"Offer title"}
+                  tipContent={
+                    "The name of the offer to explain what people will receive. "
+                  }
+                />
               }
               {...title}
             />
@@ -66,12 +70,12 @@ function OfferForm({
             >
               <TextField
                 label={
-                  <Stack>
-                    <TextContainer>Thumbnail url (optional)</TextContainer>
-                    <Tooltip content="Add a picture on the offer to show people what they will get">
-                      <Icon source={CircleInformationMajor} />
-                    </Tooltip>
-                  </Stack>
+                  <LabelTip
+                    label={"Thumbnail url (optional)"}
+                    tipContent={
+                      "Add a picture on the offer to show people what they will get "
+                    }
+                  />
                 }
                 placeholder="https://cdn.shopify.com/file/xxxxx"
               />
@@ -79,12 +83,12 @@ function OfferForm({
                 <Stack distribution="fill">
                   <TextField
                     label={
-                      <Stack>
-                        <TextContainer>Price</TextContainer>
-                        <Tooltip content="Current price of the offer people will pay">
-                          <Icon source={CircleInformationMajor} />
-                        </Tooltip>
-                      </Stack>
+                      <LabelTip
+                        label={"Price"}
+                        tipContent={
+                          "Current price of the offer people will pay"
+                        }
+                      />
                     }
                     {...price}
                     type="number"
@@ -92,12 +96,10 @@ function OfferForm({
                   />
                   <TextField
                     label={
-                      <Stack>
-                        <TextContainer>Compared price (optional)</TextContainer>
-                        <Tooltip content="Old price that will appear crossed">
-                          <Icon source={CircleInformationMajor} />
-                        </Tooltip>
-                      </Stack>
+                      <LabelTip
+                        label={"Compared price (optional)"}
+                        tipContent={"Old price that will appear crossed"}
+                      />
                     }
                     {...compareAtPrice}
                     type="number"
@@ -118,35 +120,36 @@ function OfferForm({
 
               <Checkbox
                 label={
-                  <Stack>
-                    <TextContainer>
-                      This offer has options, like size or color
-                    </TextContainer>
-                    <Tooltip content="Check this box if the product in your offer exists in several variations.">
-                      <Icon source={CircleInformationMajor} />
-                    </Tooltip>
-                  </Stack>
+                  <LabelTip
+                    label={"This offer has options, like size or color"}
+                    tipContent={
+                      "Check this box if the product in your offer exists in several variations."
+                    }
+                  />
                 }
                 checked={optionsChecked}
                 onChange={handleOptionsChange}
               />
             </Collapsible>
             <FormLayout.Group>
-              <OptionsForm
-                optionsChecked={optionsChecked}
-                list={[...list.value]}
-                onChange={list.onChange}
-                error={list.error}
-                onBlur={list.onBlur}
-              />
+              {list && (
+                <OptionsForm
+                  optionsChecked={optionsChecked}
+                  list={list?.value}
+                  onChange={list.onChange}
+                  error={list.error}
+                  onBlur={list.onBlur}
+                />
+              )}
             </FormLayout.Group>
+           
           </FormLayout>
         </Stack.Item>
         <Stack.Item>
           {open ? (
-            <Button plain icon={ChevronDownMinor} onClick={handleToggle} />
+            <Button plain icon={ChevronDownMinor} onClick={handleOfferToggle} />
           ) : (
-            <Button plain icon={ChevronUpMinor} onClick={handleToggle} />
+            <Button plain icon={ChevronUpMinor} onClick={handleOfferToggle} />
           )}
         </Stack.Item>
       </Stack>

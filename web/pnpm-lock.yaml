@@ -1,12 +1,14 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@shopify/admin-graphql-api-utilities': ^2.0.1
   '@shopify/shopify-api': ^6.2.0
   '@shopify/shopify-app-express': ^1.1.0
   '@shopify/shopify-app-session-storage-mongodb': ^1.0.5
   '@shopify/shopify-app-session-storage-sqlite': ^1.0.0
   compression: ^1.7.4
   connect-mongodb-session: ^3.1.1
+  cors: ^2.8.5
   cross-env: ^7.0.3
   crypto: ^1.0.1
   express-session: ^1.17.3
@@ -18,12 +20,14 @@ specifiers:
   serve-static: ^1.14.1
 
 dependencies:
+  '@shopify/admin-graphql-api-utilities': 2.0.1
   '@shopify/shopify-api': 6.2.0
   '@shopify/shopify-app-express': 1.2.2
   '@shopify/shopify-app-session-storage-mongodb': 1.0.5
   '@shopify/shopify-app-session-storage-sqlite': 1.2.0
   compression: 1.7.4
   connect-mongodb-session: 3.1.1
+  cors: 2.8.5
   cross-env: 7.0.3
   crypto: 1.0.1
   express-session: 1.17.3
@@ -895,6 +899,11 @@ packages:
     dev: false
     optional: true
 
+  /@shopify/admin-graphql-api-utilities/2.0.1:
+    resolution: {integrity: sha512-a2MEszRxpHFVxWhZ235oOARzFXTYUU7CwmzQr5ulqIR5+4uFnnBMR30C+CMwb0IxIRQGOmBAfo1HWRt1cdnSOA==}
+    engines: {node: ^14.17.0 || >=16.0.0}
+    dev: false
+
   /@shopify/network/1.6.4:
     resolution: {integrity: sha512-V+//Et386LnYdtNhQ3e33AKYfU25XEt8H5XYeMqPvJZpVvC9Z1lHKQMpmM/zq13VXjPUjt9/sNxHxMP3I6cbJg==}
     dev: false
@@ -1383,6 +1392,14 @@ packages:
   /cookie/0.5.0:
     resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
     engines: {node: '>= 0.6'}
+    dev: false
+
+  /cors/2.8.5:
+    resolution: {integrity: sha512-KIHbLJqu73RGr/hnbrO9uBeixNGuvSQjul/jdFvS/KFSIH1hWVd1ng7zOHx+YrEfInLG7q4n6GHQ9cDtxv/P6g==}
+    engines: {node: '>= 0.10'}
+    dependencies:
+      object-assign: 4.1.1
+      vary: 1.1.2
     dev: false
 
   /cross-env/7.0.3:

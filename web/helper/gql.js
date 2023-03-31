@@ -21,18 +21,16 @@ mutation productVariantCreate($input: ProductVariantInput!) {
 
 // 获取shopify产品列表 分页
 export const QUERY_PRODUCTS_LIMIT = `
-query products($first: Int!, $after: String, $title: String) {
+query GetProducts($first: Int!, $after: String, $title: String) {
   products(first: $first, after: $after, query: $title) {
     pageInfo {
       hasNextPage
       hasPreviousPage
+      endCursor
     }
-    edges {
-      cursor
-      node {
-        id
-        title
-      }
+    nodes {
+      id
+      title
     }
   }
 }
@@ -45,11 +43,12 @@ query getProduct($productId: ID!) {
     id
     title
     hasOnlyDefaultVariant
+    handle
     options {
       name
       values
     }
-    variants(first: 10) {
+    variants(first: 30) {
       edges {
         node {
           id
@@ -90,10 +89,17 @@ mutation productUpdate($input: ProductInput!) {
   productUpdate(input: $input) {
     product {
       id
-      variants(first: 10) {
+      handle
+      variants(first: 30) {
         edges {
           node {
             id
+            price
+            title
+            selectedOptions{
+              name
+              value
+             }
           }
         }
       }
@@ -112,6 +118,20 @@ export const QUERY_PRODCUT_INFO = `query getProduct($productId: ID!) {
   product(id: $productId) {
     id
     title
+    handle
+  }
+}
+`;
+
+// 根据id 获取shopify collection信息
+export const QUERY_COLLECTION = `
+query getCollection($productId: ID!) {
+  collection(id: $productId) {
+    id
+    title
+    handle
+    updatedAt
+    productsCount
   }
 }
 `;

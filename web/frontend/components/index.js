@@ -1,4 +1,4 @@
 export { ProductsCard } from "./ProductsCard";
-export { ProductsList } from "./ProductsList";
+export { OfferList } from "./offer-list";
 export { ProductForm } from "./product-form/ProductForm";
 export * from "./providers";

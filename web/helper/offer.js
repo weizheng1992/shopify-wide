@@ -1,6 +1,5 @@
-import shopify from "../shopify.js";
 import OfferController from "../controller/OfferController.js";
-import { QUERY_PRODUCT_OFFER_VARIANTS } from "../helper/gql.js";
+import OfferOptionsController from "../controller/OfferOptionsController.js";
 
 export async function getShopUrlFromSession(req, res) {
   return `https://${res.locals.shopify.session.shop}`;
@@ -12,84 +11,136 @@ export async function getOfferByPid(req, res, checkDomain = true) {
       productId: req.params.id,
     });
     if (!Array.isArray(offer) || offer?.length !== 1) return undefined;
-    return offer[0];
+    const data = offer[0];
+    if (
+      data === undefined ||
+      (checkDomain &&
+        (await getShopUrlFromSession(req, res)) !== data.shopDomain)
+    ) {
+      res.status(404).send();
+    }
+    return data;
   } catch (error) {
     res.status(500).send(error.message);
   }
 }
 
-export async function getProductByPid(req, res) {
-  if (req.params.id) {
-    const productId = req.params.id;
-    const client = new shopify.api.clients.Graphql({
-      session: res.locals.shopify.session,
+export async function getOfferOptionsByOfferId(req, res, OfferId) {
+  try {
+    const offer = await OfferOptionsController.getOfferOptionsByParams({
+      OfferId,
     });
-    try {
-      const adminData = await client.query({
-        data: {
-          query: QUERY_PRODUCT_OFFER_VARIANTS,
+    if (!Array.isArray(offer) || offer?.length !== 1) return undefined;
 
-          /* The IDs that are pulled from the app's database are used to query product, variant and discount information */
-          variables: { productId },
-        },
-      });
-
-      const shopifyProduct = adminData.body.data.product;
-      return shopifyProduct;
-    } catch (error) {
-      return undefined;
-    }
+    return data;
+  } catch (error) {
+    res.status(500).send(error.message);
   }
-  return undefined;
 }
 
-// variables.input.variants = [
+// const data= [
 //   {
-//     price: "4.00",
-//     options: ["big", "mauve"],
+//     "title":"S4",
+//     "price":"4.00",
+//     "list":[
+//       {"optionsName":"Color","optionsTags":["red","yellow"]},
+//       {"optionsName":"Style","optionsTags":["ss","ddd"]}
+//     ]
 //   },
 //   {
-//     price: "2.00",
-//     options: ["big", "iridescent"],
-//   },
-//   {
-//     price: "5.00",
-//     options: ["small", "mauve"],
-//   },
-//   {
-//     price: "1.00",
-//     options: ["small", "iridescent"],
-//   },
+//     "title":"M",
+//     "price":"5.00",
+//     "list":[
+//       {"optionsName":"Color","optionsTags":["red","yellow"]},
+//       {"optionsName":"Style","optionsTags":["ss","ddd"]}
+//     ]
+//   }
 // ];
 
+// [
+//   { price: '4.00', options: [ 'S4', 'red', 'ss' ] },
+//   { price: '4.00', options: [ 'S4', 'red', 'ddd' ] },
+//   { price: '4.00', options: [ 'S4', 'yellow', 'ss' ] },
+//   { price: '4.00', options: [ 'S4', 'yellow', 'ddd' ] },
+//   { price: '5.00', options: [ 'M', 'red', 'ss' ] },
+//   { price: '5.00', options: [ 'M', 'red', 'ddd' ] },
+//   { price: '5.00', options: [ 'M', 'yellow', 'ss' ] },
+//   { price: '5.00', options: [ 'M', 'yellow', 'ddd' ] }
+// ]
 /**
- * @description 将数据转换成上面的格式
+ * @description shopify返回的options格式转换成offer options格式
  *
- * @param {*} data
+ * @param {*} shopifyProduct
  * @return {*}
  */
-export const getCombinations = (data) => {
-  const result = [];
-  data.forEach((item) => {
-    const { price } = item;
-
-    const generateOptions = (index, options) => {
-      const list = item.list[index];
-      if (!list) {
-        const optionList = [item.title];
-        Object.values(options).forEach((option) => {
-          optionList.push(option);
-        });
-        result.push({ price, options: optionList });
-        return;
-      }
-      const { optionsName, optionsTags: tags } = list;
-      tags.forEach((tag) => {
-        generateOptions(index + 1, { ...options, [optionsName]: tag });
-      });
-    };
-
-    generateOptions(0, {});
+export const getShopifyOptionsToOfferOptions = (shopifyProduct) => {
+  const nodeList = shopifyProduct.variants.edges.map((item) => {
+    const no = item.node;
+    delete no.title;
+    return no;
   });
-  return result;
+  const optionNames = [];
+
+  shopifyProduct.options.map((item) => {
+    optionNames.push(item.name);
+  });
+
+  const data = Array.from(
+    nodeList
+      .reduce((acc, curr) => {
+        const sizeOption = curr.selectedOptions.find((option) =>
+          optionNames.includes(option.name)
+        );
+        const title = sizeOption ? sizeOption.value : "Default Title";
+        const item = acc.get(title) || {
+          title,
+          price: curr.price,
+          compareAtPrice: curr.compareAtPrice,
+          list: [],
+        };
+        curr.selectedOptions
+          .filter((option) => option.name !== optionNames[0])
+          .forEach((option) => {
+            const optionValues = item.list.find(
+              (opt) => opt.optionsName === option.name
+            ) || {
+              optionsName: option.name,
+              optionsTags: [],
+            };
+            if (!optionValues.optionsTags.includes(option.value)) {
+              optionValues.optionsTags.push(option.value);
+            }
+            if (!item.list.includes(optionValues)) {
+              item.list.push(optionValues);
+            }
+          });
+        acc.set(title, item);
+        return acc;
+      }, new Map())
+      .values()
+  );
+
+  return data;
+};
+
+export const insertOfferOptions = async (data, _id, isUpdate) => {
+  const nodes = data.body.data.productUpdate.product.variants.edges;
+  const nodeAddId = nodes.map((item) => {
+    const { id, ...obj } = item.node;
+    return {
+      ...obj,
+      offerId: _id,
+      variantId: id.split("/").pop(),
+    };
+  });
+  let list = null;
+  if (isUpdate) {
+    list = await OfferOptionsController.updateOfferOptionsForofferId(
+      _id,
+      nodeAddId
+    );
+  } else {
+    list = await OfferOptionsController.insertOfferOptions(nodeAddId);
+  }
+  return list;
 };

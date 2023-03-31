@@ -2,7 +2,6 @@ import { Stack, Tag, TextField, Button } from "@shopify/polaris";
 import { useState, useCallback, useEffect, memo } from "react";
 
 function TextTag({ label, placeholder, optionsTags }) {
-  console.log(optionsTags);
   const [tags, setTags] = useState(optionsTags.value);
   const [textFieldValue, setTextFieldValue] = useState("");
 

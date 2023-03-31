@@ -1,21 +1,13 @@
 import { useEffect, memo, useState, useCallback, useMemo } from "react";
 import {
   Collapsible,
-  Card,
-  TextField,
-  Icon,
-  FormLayout,
   Button,
   InlineError,
 } from "@shopify/polaris";
-import { DeleteMajor } from "@shopify/polaris-icons";
 import { useDynamicList, useSubmit } from "@shopify/react-form";
 
-import LabelTip from "../LabelTip";
-import TextTag from "./TextTag";
 import OptionsItem from './OptonsItem'
 
-const indexToEn = ["first", "second"];
 const initOptions = { optionsName: "", optionsTags: [] };
 
 function OptionsForm({ optionsChecked, list, onChange, error, onBlur }) {
@@ -59,7 +51,7 @@ function OptionsForm({ optionsChecked, list, onChange, error, onBlur }) {
     onBlur();
   }, [value]);
 
-  const handleRemove = (index) => {
+  const handleRemoveItem = (index) => {
     removeItem(index);
   };
 
@@ -78,7 +70,7 @@ function OptionsForm({ optionsChecked, list, onChange, error, onBlur }) {
         expandOnPrint
       >
         {fieldsList.map((item, index) => (
-          <OptionsItem index={index + 1} key={index} {...item} />
+          <OptionsItem index={index + 1} key={index} {...item}  onRemoveItem={handleRemoveItem}/>
         ))}
         <Button plain destructive onClick={addItem}>
           + Add another option

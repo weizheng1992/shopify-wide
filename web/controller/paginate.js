@@ -10,16 +10,19 @@ async function paginate(model, query, options) {
   try {
     const [total, data] = await Promise.all([
       countQuery.exec(),
-      documentsQuery.exec(),
+      documentsQuery.lean().exec(),
     ]);
 
     const totalPages = Math.ceil(total / limit);
-
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
     return {
       data,
       total,
       totalPages,
       currentPage: page,
+      hasNextPage,
+      hasPreviousPage
     };
   } catch (error) {
     console.error(error);

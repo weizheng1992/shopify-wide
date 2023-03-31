@@ -7,127 +7,57 @@ import {
   TextContainer,
   Checkbox,
   Button,
+  Link,
+  Toast,
 } from "@shopify/polaris";
-import { ContextualSaveBar, useNavigate } from "@shopify/app-bridge-react";
-import { useDynamicList, useSubmit } from "@shopify/react-form";
+import { ContextualSaveBar } from "@shopify/app-bridge-react";
 
 import OfferForm from "../offer-form/OfferForm";
 import LabelTip from "../LabelTip";
 import RightView from "./RightView";
+
+import useFormhooks from "./useFormhooks.js";
+import OfferContext from "./useFormContext";
+
 import "../product-form.css";
 
-import { useAuthenticatedFetch } from "../../hooks";
-
-const init = [{ title: "", price: "", compareAtPrice: "" }];
-
 export function ProductForm({ offerInfo, productId }) {
-  const [offer, setOffer] = useState(offerInfo);
-  const [headingvalue, setHeadingvalue] = useState(offerInfo.heading);
-  const fetch = useAuthenticatedFetch();
-
-  const list = useMemo(
-    () => ({
-      list: offerInfo?.list || init,
-      validates: {
-        price: (price) => {
-          var reg = /^[0-9]+.?[0-9]*$/; //判断字符串是否为数字 ，判断正整数用/^[1-9]+[0-9]*]*$/
-          if (price !== null && price !== "") {
-            if (!reg.test(price)) {
-              return "请输入数字";
-            }
-          } else {
-            return " You need to add a price";
-          }
-        },
-        title: (title) => {
-          if (title === "") {
-            return " You need to add a title for this offer";
-          }
-        },
-        list: (list, data) => {
-          if (list.length > 0) {
-            const listItemLength = Array.isArray(data.listItem.list.value)
-              ? data.listItem.list.value.length
-              : 0;
-
-            const siblingsLength = Array.isArray(data.siblings)
-              ? data.siblings.reduce((acc, sibling) => {
-                  return Array.isArray(sibling.list.value)
-                    ? acc + sibling.list.value.length
-                    : acc;
-                }, 0)
-              : 0;
-            if (listItemLength !== siblingsLength) {
-              return " All your offers need to have the same amount of options";
-            }
-          }
-        },
-      },
-    }),
-    [offerInfo.list]
-  );
-
-  const emptyCardFactory = () => ({
-    title: "",
-    price: "",
-    compareAtPrice: "",
-    list: [],
-  });
-
+  const [headingvalue, setHeadingvalue] = useState(offerInfo?.heading);
+  const [toast, setToast] = useState(false);
+  const [checkedOnHomepage, setCheckedOnHomepage] = useState(false);
+  console.log(offerInfo?.list);
   const {
-    fields: fieldsList,
     addItem,
     removeItem,
-    removeItems,
-    moveItem,
     reset,
     dirty,
+    fieldsList,
+    submit,
+    submitting,
     value,
-    newDefaultValue,
-    defaultValue,
-  } = useDynamicList(list, emptyCardFactory);
-
-  const onSubmit = useCallback(
-    (body) => {
-      (async () => {
-        const parsedBody = {
-          variants: [],
-        };
-        const keys = Object.keys(body);
-
-        for (let index = 0; index < keys.length; index++) {
-          const element = body[index];
-          parsedBody.variants.push(element);
-        }
-
-        parsedBody.productId = productId;
-        parsedBody.heading = headingvalue;
-        const response = await fetch("/api/offer/create", {
-          method: "POST",
-          body: JSON.stringify(parsedBody),
-          headers: { "Content-Type": "application/json" },
-        });
-        if (response.ok) {
-          const offer = await response.json();
-          console.log(offer);
-        }
-      })();
-      return { status: "success" };
-    },
-    [value, headingvalue]
+  } = useFormhooks(
+    offerInfo?.list,
+    offerInfo?.id,
+    headingvalue,
+    productId,
+    setToast
   );
 
-  const { submit, submitting } = useSubmit(onSubmit, fieldsList);
-
-  // const dirty = useDirty(fields);
-  // const reset = useReset(fields);
-
-  const [checked, setChecked] = useState(false);
-  const handleChange = useCallback((newChecked) => setChecked(newChecked), []);
+  const handleOnHomepageChange = useCallback(
+    (newChecked) => setCheckedOnHomepage(newChecked),
+    []
+  );
 
   const handleheadingChange = (val) => {
     setHeadingvalue(val);
   };
+
+  const pId = useMemo(() => {
+    const parry = productId.split("/");
+    return parry[parry.length - 1];
+  }, [productId]);
+
+  const toggleToast = useCallback(() => setToast((active) => !active), []);
 
   return (
     <>
@@ -139,7 +69,14 @@ export function ProductForm({ offerInfo, productId }) {
         }}
       >
         <Card
-          title={`Edit the offers on your product -${offer?.title}`}
+          title={
+            <>
+              Edit the offers on your product -
+              <Link url={`/admin/products/${pId}`} external>
+                {offerInfo?.title}
+              </Link>
+            </>
+          }
           sectioned
         >
           <Form>
@@ -181,8 +118,8 @@ export function ProductForm({ offerInfo, productId }) {
                     }
                   />
                 }
-                checked={checked}
-                onChange={handleChange}
+                checked={checkedOnHomepage}
+                onChange={handleOnHomepageChange}
               />
               <TextContainer>Configure your offers</TextContainer>
               {fieldsList.map((item, index) => (
@@ -198,7 +135,14 @@ export function ProductForm({ offerInfo, productId }) {
           </Form>
         </Card>
       </div>
-      <RightView heading={offerInfo.heading} list={value} />
+      <RightView heading={offerInfo?.heading} list={value} />
+
+      {toast ? (
+        <Toast
+          content={offerInfo?.id ? "Update success" : "Create success"}
+          onDismiss={toggleToast}
+        />
+      ) : null}
     </>
   );
 }
